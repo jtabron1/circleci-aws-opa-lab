@@ -141,13 +141,18 @@ jobs:
           command: |
             # Install AWS CLI
             curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-            unzip awscliv2.zip
+            unzip -o awscliv2.zip
             sudo ./aws/install
             
-            # Install Terraform
+            # Install Terraform (clean install)
+            rm -f terraform  # Remove any existing terraform binary
             wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
-            unzip terraform_1.6.0_linux_amd64.zip
+            unzip -o terraform_1.6.0_linux_amd64.zip
             sudo mv terraform /usr/local/bin/
+            
+            # Verify installations
+            terraform version
+            aws --version
       
       - run:
           name: Create and Deploy Compliant Infrastructure
