@@ -145,9 +145,10 @@ jobs:
             sudo ./aws/install
             
             # Install Terraform (clean install)
-            rm -f terraform  # Remove any existing terraform binary
+            rm -rf terraform*  # Remove any existing terraform files or directories
             wget https://releases.hashicorp.com/terraform/1.6.0/terraform_1.6.0_linux_amd64.zip
             unzip -o terraform_1.6.0_linux_amd64.zip
+            chmod +x terraform
             sudo mv terraform /usr/local/bin/
             
             # Verify installations
