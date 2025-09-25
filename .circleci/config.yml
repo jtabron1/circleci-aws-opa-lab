@@ -56,11 +56,18 @@ jobs:
             TOTAL_VIOLATIONS=0
             FOUND_VIOLATIONS=false
             
-            jq -c '.[]' terraform-resources.json | while read resource; do
-              echo "Validating resource: $(echo "$resource" | jq -r '.resource_name')"
+            # Process each resource individually
+            for i in $(jq -r 'keys | .[]' terraform-resources.json); do
+              resource=$(jq -c ".[$i]" terraform-resources.json)
+              resource_name=$(echo "$resource" | jq -r '.resource_name')
               
-              VIOLATIONS=$(echo "$resource" | opa eval -d policies/ -i - "data.aws.s3.security.deny[x]" --format json)
-              WARNINGS=$(echo "$resource" | opa eval -d policies/ -i - "data.aws.s3.security.warn[x]" --format json)
+              echo "Validating resource: $resource_name"
+              
+              # Write resource to temporary file for OPA
+              echo "$resource" > /tmp/resource_$i.json
+              
+              VIOLATIONS=$(opa eval -d policies/ -i /tmp/resource_$i.json "data.aws.s3.security.deny[x]" --format json)
+              WARNINGS=$(opa eval -d policies/ -i /tmp/resource_$i.json "data.aws.s3.security.warn[x]" --format json)
               
               # Check if violations exist
               if echo "$VIOLATIONS" | jq -e '.result | length > 0' > /dev/null 2>&1; then
@@ -76,6 +83,9 @@ jobs:
                 echo "⚠️  POLICY WARNINGS:"
                 echo "$WARNINGS" | jq '.result'
               fi
+              
+              # Clean up temp file
+              rm -f /tmp/resource_$i.json
             done
             
             # Check if any violations were found
